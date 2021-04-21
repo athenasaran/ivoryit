@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Campo Minado</title>
+    <script src="js/campo-minado.js"></script>
+</head>
+
+<body>
+    <div id="exibir-execucao"></div>
+
+    <script>
+        var campoMinado = new CampoMinado();//nova instancia do campo minado
+
+
+        document.getElementById('exibir-execucao').innerHTML += '----------- Início do jogo -----------';
+        document.getElementById('exibir-execucao').innerHTML += '<pre>' + campoMinado.Tabuleiro() + '</pre>';
+
+        function calcularNumeroLinha(posicao) {//recebe multiplos de 9
+            return ~~(posicao / 9) + 1; //not bit a bit
+        }//olha a proxima posição
+
+        function calcularNumeroColuna(linha, posicao) {
+            return linha == 1 //se linha é igual a um -> proxima posicao, se nao calcula uma nova posicao, a posicao é multiplo de 9
+                ? posicao + 1
+                : posicao - (((linha - 1) * 9)) + 1;
+        }
+
+        var casasFechadas = [];
+        var casasComBombas = []; // array com as casas que estao com bombas
+        var casasParaAbrir = [];//arrau com as casas que podemos abrir
+
+        while (campoMinado.JogoStatus() == 0) {// se ainda nao tiver acabado o jogo
+            var tabuleiro = campoMinado.Tabuleiro();
+
+            document.getElementById('exibir-execucao').innerHTML += '----------- Status: Jogo em aberto -----------';
+            document.getElementById('exibir-execucao').innerHTML += '<pre>' + tabuleiro + '</pre>';
+
+            tabuleiro = tabuleiro.split('\r\n').join('');
+
+
+
+            for (var i = 0; i < 81; i++) {
+                if (i % 9 == 0) {
+
+                    var linha = calcularNumeroLinha(i);// calcula linha passando multiplo de 9, incrementa de 1 a 9 tambem
+                }
+                var coluna = calcularNumeroColuna(linha, i);//calcula a coluna usando a linha calculada anteriormente, incrementando de 1 a 9
+
+
+                if (tabuleiro[i] != 0 && tabuleiro[i] != '-') { // se nao tem casas fechadas
+                    // Topo Esquerda
+                    if (linha != 1 && coluna != 1 && tabuleiro[i - 10] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+
+
+                        casasFechadas.push(i - 10);
+
+                    }
+
+                    // Topo
+                    if (linha != 1 && tabuleiro[i - 9] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i - 9);
+
+                    }
+
+                    // Topo Direita
+                    if (linha != 1 && coluna != 9 && tabuleiro[i - 8] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i - 8);
+
+                    }
+
+                    // Direita
+                    if (coluna != 9 && tabuleiro[i + 1] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i + 1);
+
+                    }
+
+                    // Abaixo Direita
+                    if (linha != 9 && coluna != 9 && tabuleiro[i + 10] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i + 10);
+
+                    }
+
+                    // Abaixo
+                    if (linha != 9 && tabuleiro[i + 9] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i + 9);
+
+                    }
+
+                    // Abaixo Esquerda
+                    if (linha != 9 && coluna != 1 && tabuleiro[i + 8] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i + 8);
+
+                    }
+
+                    // Esquerda
+                    if (coluna != 1 && tabuleiro[i - 1] == '-') {//onde tem casas fechadas, pego a posiçao anterior e adiciono no casasFechadas
+                        casasFechadas.push(i - 1);
+                    }
+
+                    // Se quantidade de casas fechadas for igual ao número informativo de bombas da casa, registra essas casas fechadas como bombas.
+                    if (casasFechadas.length == tabuleiro[i]) {
+
+                        casasFechadas.forEach(casa => {
+                            if (casasComBombas.indexOf(casa) == -1) {//se casas com bombas nao fazem parte do casasfechadas
+                                var linhaBomba = calcularNumeroLinha(casa);//calculo o numero de linhas com o que nao fazem parte
+                                var colunaBomba = calcularNumeroColuna(linhaBomba, casa);//calculo o numero de colunas com o que nao fazem parte
+
+
+                                document.getElementById('exibir-execucao').innerHTML += '<pre>Bomba encontrada: linha(' + linhaBomba + ') / coluna(' + colunaBomba + ')</pre>';//mostra aonde se achou as bombas
+                                casasComBombas.push(casa);//adiciona as bombas no casas com bombas
+                            }
+                        });
+                    }
+
+                    if (casasFechadas.length > tabuleiro[i]) {// olhando se a quantidade de casas fechadas é maior que o numero de bombas
+                        casasParaAbrir = casasFechadas.filter(x => !casasComBombas.includes(x));//abrir as casas que nao tem bombas e nao foram abertas
+
+                        if ((casasFechadas.length - tabuleiro[i]) == casasParaAbrir.length) {// se as casas fechadas menos a quantidade de bombas for igual a casasparaabrir, ou seja, ainda tem casas para se abrir
+                            casasParaAbrir.forEach(casa => {
+                                var linhaAbrir = calcularNumeroLinha(casa);
+                                var colunaAbrir = calcularNumeroColuna(linhaAbrir, casa);
+                                campoMinado.Abrir(linhaAbrir, colunaAbrir);
+
+                                document.getElementById('exibir-execucao').innerHTML += '<pre>Abrindo casa: linha(' + linhaAbrir + ') / coluna(' + colunaAbrir + ')</pre>';
+                            });
+
+                            casasFechadas = [];
+                            break;
+                        }
+                    }
+
+                    casasFechadas = [];
+                }
+            }
+        }
+
+        document.getElementById('exibir-execucao').innerHTML += '----------- Status: ' + (campoMinado.JogoStatus() == 1 ? 'Parabens, você venceu' : 'Game Over') + ' -----------';
+        document.getElementById('exibir-execucao').innerHTML += '<pre>' + campoMinado.Tabuleiro() + '</pre>';
+    </script>
+</body>
+
+</html>
